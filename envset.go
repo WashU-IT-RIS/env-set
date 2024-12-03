@@ -1,3 +1,7 @@
+// Basically like the POSIX "env" command, but this one is statically linked
+// and it's able to copy the value from another variable as well as set a
+// variable to a particular value
+
 package main
 
 import (
@@ -16,7 +20,7 @@ func main() {
 
     // The first argv index that's the executable we were asked to run
     // in the container.  Subsequent args are params to this executable.
-    first_exec_idx := -1
+    var first_exec_idx = len(os.Args) + 1
 
     env := os.Environ()
 
@@ -41,6 +45,11 @@ func main() {
     }
 
     //fmt.Printf("Remaining arguments: %s\n", strings.Join(os.Args[first_exec_idx:], ","))
+
+    if first_exec_idx >= len(os.Args) {
+        print_help()
+        os.Exit(1)
+    }
 
     // If the executable pathname contains a "/", then it's meant to be
     // an explicit path.  If no "/", then find it in the PATH.
@@ -68,4 +77,17 @@ func main() {
     }
     // Shouldn't get here.  Either the exec replaces this process, or there
     // was an error caught by the above if/else
+}
+
+func print_help() {
+    fmt.Printf(`Usage: %s [NAME=$OTHERNAME] [NAME=VALUE] ... COMMAND [ARG] ...
+Set each NAME to VALUE or the value of OTHERNAME in the environment and
+run COMMAND.
+
+Much like the POSIX command 'env', but also accepts params of the format
+NAME=$OTHERNAME to copy the value of another environment variable to a new
+name.  The first parameter that does not look like an assignment is taken
+as the command to run, and subsequent parameters are passed to that command
+as its parameters.`, os.Args[0])
+    fmt.Printf("\n")
 }
