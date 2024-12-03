@@ -58,16 +58,12 @@ func main() {
     }
 
     // execvp() the requested process
-    exec_err := syscall.Exec(bin_path, os.Args[first_exec_idx:], env)
-    if exec_err != nil {
+    if exec_err := syscall.Exec(bin_path, os.Args[first_exec_idx:], env); exec_err != nil {
         fmt.Printf("Can't execute %s: %v\n", os.Args[first_exec_idx], exec_err)
-        if _, stat_err := os.Stat(bin_path); stat_err == nil {
-            os.Exit(126)  // Same as bash, path exists but is not executable
-        } else if errors.Is(stat_err, os.ErrNotExist) {
-            os.Exit(127)
+        if errors.Is(exec_err, os.ErrNotExist) {
+            os.Exit(127) // Matches bash error for ENOENT
         } else {
-            // Not sure what the conditions would be to get here
-            os.Exit(126)
+            os.Exit(126) // Matches bash error for found for not executable
         }
     }
     // Shouldn't get here.  Either the exec replaces this process, or there
